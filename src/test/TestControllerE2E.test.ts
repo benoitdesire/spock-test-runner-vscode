@@ -4,6 +4,7 @@ import * as path from 'path';
 import { promisify } from 'util';
 import * as vscode from 'vscode';
 import { SpockTestController } from '../testController';
+import { gradleAvailable, gradleProjectPath, gradleWrapper } from './gradleTestUtils';
 
 const execAsync = promisify(exec);
 
@@ -18,12 +19,12 @@ jest.mock('vscode', () => ({
     workspaceFolders: [
       {
         uri: {
-          fsPath: path.join(__dirname, '../../sample-project')
+          fsPath: path.join(__dirname, '../../sample-projects/gradle-project')
         }
       }
     ],
     findFiles: jest.fn().mockResolvedValue([
-      { fsPath: path.join(__dirname, '../../sample-project/src/test/groovy/com/example/BowlingGameSpec.groovy') }
+      { fsPath: path.join(__dirname, '../../sample-projects/gradle-project/src/test/groovy/com/example/BowlingGameSpec.groovy') }
     ]),
     createFileSystemWatcher: jest.fn().mockReturnValue({
       onDidCreate: jest.fn(),
@@ -31,10 +32,10 @@ jest.mock('vscode', () => ({
       onDidDelete: jest.fn()
     }),
     openTextDocument: jest.fn().mockResolvedValue({
-      getText: () => fs.readFileSync(path.join(__dirname, '../../sample-project/src/test/groovy/com/example/BowlingGameSpec.groovy'), 'utf8')
+      getText: () => fs.readFileSync(path.join(__dirname, '../../sample-projects/gradle-project/src/test/groovy/com/example/BowlingGameSpec.groovy'), 'utf8')
     }),
     getWorkspaceFolder: jest.fn().mockReturnValue({
-      uri: { fsPath: path.join(__dirname, '../../sample-project') }
+      uri: { fsPath: path.join(__dirname, '../../sample-projects/gradle-project') }
     })
   },
   tests: {
@@ -104,14 +105,14 @@ jest.mock('vscode', () => ({
   }
 }));
 
-describe('TestController E2E Tests', () => {
+(gradleAvailable ? describe : describe.skip)('TestController E2E Tests', () => {
   let controller: SpockTestController;
   let mockContext: vscode.ExtensionContext;
   let mockLogger: any;
   let testProjectPath: string;
 
   beforeAll(() => {
-    testProjectPath = path.join(__dirname, '../../sample-project');
+    testProjectPath = path.join(__dirname, '../../sample-projects/gradle-project');
     
     // Verify the test project exists
     if (!fs.existsSync(testProjectPath)) {
@@ -164,12 +165,15 @@ describe('TestController E2E Tests', () => {
 
       // Mock the test execution service to run real Gradle
       const originalExecuteTest = controller['testExecutionService'].executeTest;
-      controller['testExecutionService'].executeTest = jest.fn().mockImplementation(async (testInfo) => {
+      controller['testExecutionService'].executeTest = jest.fn().mockImplementation(async (testInfo, run, item) => {
         // Execute the actual Gradle test
         const { stdout, stderr } = await execAsync(
-          `cd ${testProjectPath} && ./gradlew test --tests "${testInfo.className}.${testInfo.testName}" --console=plain`
+          `cd ${testProjectPath} && ${gradleWrapper} test --tests "${testInfo.className}.${testInfo.testName}" --console=plain`
         );
         
+        // Simulate output being appended (as the real service would do)
+        run.appendOutput(stdout);
+
         return {
           success: !stderr && stdout.includes('BUILD SUCCESSFUL'),
           output: stdout,
@@ -209,7 +213,8 @@ describe('TestController E2E Tests', () => {
       
       const testDataMap = controller['testData'] as Map<any, any>;
       const testItems = Array.from(testDataMap.keys());
-      const testItem = testItems[0];
+      // Find a test-type item (not file or class)
+      const testItem = testItems.find(item => testDataMap.get(item)?.type === 'test') || testItems[0];
       const testData = testDataMap.get(testItem);
 
       // Create a failing test by temporarily modifying the test file
@@ -226,11 +231,13 @@ describe('TestController E2E Tests', () => {
 
         // Mock the test execution service
         const originalExecuteTest = controller['testExecutionService'].executeTest;
-        controller['testExecutionService'].executeTest = jest.fn().mockImplementation(async (testInfo) => {
+        controller['testExecutionService'].executeTest = jest.fn().mockImplementation(async (testInfo, run, item) => {
           const { stdout, stderr } = await execAsync(
-            `cd ${testProjectPath} && ./gradlew test --tests "${testInfo.className}.${testInfo.testName}" --console=plain`
+            `cd ${testProjectPath} && ${gradleWrapper} test --tests "${testInfo.className}.${testInfo.testName}" --console=plain`
           );
           
+          run.appendOutput(stdout);
+
           return {
             success: false, // Force failure for testing
             output: stdout,

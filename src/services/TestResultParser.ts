@@ -96,20 +96,20 @@ export class TestResultParser {
   }
 
   /**
-   * Parse XML test report to extract iteration results
+   * Parse XML test report content to extract iteration results.
+   * @param xmlContent - the actual XML string content
+   * @param className - the fully-qualified class name
    */
-  async parseXmlReport(workspacePath: string, className: string): Promise<TestIterationResult[]> {
+  async parseXmlReport(xmlContent: string, className: string): Promise<TestIterationResult[]> {
     const results: TestIterationResult[] = [];
-    const xmlPath = path.join(workspacePath, 'build', 'test-results', 'test', `TEST-${className}.xml`);
 
     try {
-      if (!fs.existsSync(xmlPath)) {
-        this.logger.appendLine(`TestResultParser: XML report not found at ${xmlPath}`);
+      if (!xmlContent || !xmlContent.trim()) {
+        this.logger.appendLine(`TestResultParser: Empty XML content for ${className}`);
         return results;
       }
 
-      const xmlContent = fs.readFileSync(xmlPath, 'utf8');
-      this.logger.appendLine(`TestResultParser: Parsing XML report: ${xmlPath}`);
+      this.logger.appendLine(`TestResultParser: Parsing XML content for ${className}`);
 
       // Parse XML to extract testcase elements
       const testcaseRegex = /<testcase\s+name="([^"]+)"[^>]*classname="([^"]+)"[^>]*time="([^"]*)"[^>]*>/g;
@@ -153,9 +153,9 @@ export class TestResultParser {
         }
       }
 
-      this.logger.appendLine(`TestResultParser: Parsed ${results.length} iterations from XML report`);
+      this.logger.appendLine(`TestResultParser: Parsed ${results.length} iterations from XML content`);
     } catch (error) {
-      this.logger.appendLine(`TestResultParser: Error parsing XML report: ${error}`);
+      this.logger.appendLine(`TestResultParser: Error parsing XML content: ${error}`);
     }
 
     return results;
@@ -225,12 +225,21 @@ export class TestResultParser {
   ): Promise<TestIterationResult[]> {
     this.logger.appendLine(`TestResultParser: Parsing results for ${className}.${testName}`);
     
-    // Try XML first (more accurate)
-    const xmlResults = await this.parseXmlReport(workspacePath, className);
-    
-    if (xmlResults.length > 0) {
-      this.logger.appendLine(`TestResultParser: Using ${xmlResults.length} results from XML report`);
-      return xmlResults;
+    // Try XML first (more accurate) — read file here so parseXmlReport stays content-based
+    const xmlPath = path.join(workspacePath, 'build', 'test-results', 'test', `TEST-${className}.xml`);
+    if (fs.existsSync(xmlPath)) {
+      try {
+        const xmlContent = fs.readFileSync(xmlPath, 'utf8');
+        const xmlResults = await this.parseXmlReport(xmlContent, className);
+        if (xmlResults.length > 0) {
+          this.logger.appendLine(`TestResultParser: Using ${xmlResults.length} results from XML report`);
+          return xmlResults;
+        }
+      } catch (e) {
+        this.logger.appendLine(`TestResultParser: Failed to read XML report: ${e}`);
+      }
+    } else {
+      this.logger.appendLine(`TestResultParser: XML report not found at ${xmlPath}`);
     }
     
     // Fallback to console output

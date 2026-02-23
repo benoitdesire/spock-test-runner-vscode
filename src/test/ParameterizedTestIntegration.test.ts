@@ -253,10 +253,10 @@ describe('Parameterized Test Results Integration', () => {
 
       // 14. Verify XML report was read
       expect(fs.existsSync).toHaveBeenCalledWith(
-        expect.stringContaining('build/test-results/test/TEST-DataDrivenSpec.xml')
+        expect.stringContaining('TEST-DataDrivenSpec.xml')
       );
       expect(fs.readFileSync).toHaveBeenCalledWith(
-        expect.stringContaining('build/test-results/test/TEST-DataDrivenSpec.xml'),
+        expect.stringContaining('TEST-DataDrivenSpec.xml'),
         'utf8'
       );
     });

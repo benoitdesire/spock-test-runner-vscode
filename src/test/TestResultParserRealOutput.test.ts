@@ -3,8 +3,20 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
 import { TestResultParser } from '../services/TestResultParser';
+import { describeGradle, gradleProjectPath, gradleWrapper } from './gradleTestUtils';
 
 const execAsync = promisify(exec);
+
+const runGradle = async (args: string): Promise<{ stdout: string; stderr: string }> => {
+  try {
+    return await execAsync(`${gradleWrapper} ${args}`, { cwd: gradleProjectPath });
+  } catch (error: any) {
+    return {
+      stdout: error?.stdout ?? '',
+      stderr: error?.stderr ?? String(error)
+    };
+  }
+};
 
 // Mock vscode module
 jest.mock('vscode', () => ({
@@ -15,13 +27,13 @@ jest.mock('vscode', () => ({
   }
 }));
 
-describe('TestResultParser with Real Gradle Output', () => {
+describeGradle('TestResultParser with Real Gradle Output', () => {
   let parser: TestResultParser;
   let mockLogger: any;
   let testProjectPath: string;
 
   beforeAll(() => {
-    testProjectPath = path.join(__dirname, '../../sample-project');
+    testProjectPath = path.join(__dirname, '../../sample-projects/gradle-project');
     
     // Verify the test project exists
     if (!fs.existsSync(testProjectPath)) {
@@ -39,7 +51,7 @@ describe('TestResultParser with Real Gradle Output', () => {
   describe('Real Gradle Output Analysis', () => {
     it('should analyze actual Gradle test output format', async () => {
       // Execute a simple test to get real console output
-      const { stdout, stderr } = await execAsync('cd sample-project && ./gradlew test --tests "com.example.CalculatorSpec" --console=plain --continue');
+      const { stdout, stderr } = await runGradle('test --tests "com.example.CalculatorSpec" --console=plain --continue');
       
       console.log('=== REAL GRADLE OUTPUT ===');
       console.log('STDOUT:');
@@ -80,7 +92,7 @@ describe('TestResultParser with Real Gradle Output', () => {
 
     it('should analyze data-driven test output format', async () => {
       // Execute a data-driven test
-      const { stdout, stderr } = await execAsync('cd sample-project && ./gradlew test --tests "com.example.DataDrivenSpec" --console=plain --continue');
+      const { stdout, stderr } = await runGradle('test --tests "com.example.DataDrivenSpec" --console=plain --continue');
       
       console.log('=== DATA-DRIVEN TEST OUTPUT ===');
       console.log('STDOUT:');
@@ -122,7 +134,7 @@ describe('TestResultParser with Real Gradle Output', () => {
     it('should analyze XML report format', async () => {
       // Execute tests to generate XML reports (ignore failures)
       try {
-        await execAsync('cd sample-project && ./gradlew test --console=plain --continue');
+        await runGradle('test --console=plain --continue');
       } catch (error) {
         // Ignore build failures, we just want the XML reports
         console.log('Build failed but continuing to analyze XML reports...');
@@ -158,7 +170,7 @@ describe('TestResultParser with Real Gradle Output', () => {
   describe('Output Pattern Analysis', () => {
     it('should identify common Gradle output patterns', async () => {
       // Execute a test and analyze the output patterns
-      const { stdout } = await execAsync('cd sample-project && ./gradlew test --tests "com.example.CalculatorSpec" --console=plain --continue');
+      const { stdout } = await runGradle('test --tests "com.example.CalculatorSpec" --console=plain --continue');
       
       const lines = stdout.split('\n');
       

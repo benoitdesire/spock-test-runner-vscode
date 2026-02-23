@@ -72,8 +72,10 @@ export class BuildToolService {
     workspacePath?: string,
     logger?: vscode.OutputChannel
   ): string[] {
-    const gradleCommand = (workspacePath && this.hasGradleWrapper(workspacePath)) ? './gradlew' : 'gradle';
-    const baseArgs = [gradleCommand, 'test', '--tests', testName];
+    const isWindows = process.platform === 'win32';
+    const gradleCommand = (workspacePath && this.hasGradleWrapper(workspacePath)) ? (isWindows ? '.\\gradlew.bat' : './gradlew') : 'gradle';
+    const escapedTestName = isWindows ? `"${testName}"` : testName;
+    const baseArgs = [gradleCommand, 'test', '--tests', escapedTestName];
     
     // Use init script to force test execution
     const initScriptPath = this.getInitScriptPath();
@@ -97,7 +99,8 @@ export class BuildToolService {
     workspacePath?: string,
     logger?: vscode.OutputChannel
   ): string[] {
-    const mavenCommand = (workspacePath && this.hasMavenWrapper(workspacePath)) ? './mvnw' : 'mvn';
+    const isWindows = process.platform === 'win32';
+    const mavenCommand = (workspacePath && this.hasMavenWrapper(workspacePath)) ? (isWindows ? '.\\mvnw.cmd' : './mvnw') : 'mvn';
     
     // Maven test parameter format: -Dtest=ClassName#methodName
     // Convert from "com.example.FrameSpec.should handle last frame"
@@ -134,10 +137,10 @@ export class BuildToolService {
   }
 
   static hasGradleWrapper(workspacePath: string): boolean {
-    return fs.existsSync(path.join(workspacePath, 'gradlew'));
+    return fs.existsSync(path.join(workspacePath, 'gradlew')) || fs.existsSync(path.join(workspacePath, 'gradlew.bat'));
   }
 
   private static hasMavenWrapper(workspacePath: string): boolean {
-    return fs.existsSync(path.join(workspacePath, 'mvnw'));
+    return fs.existsSync(path.join(workspacePath, 'mvnw')) || fs.existsSync(path.join(workspacePath, 'mvnw.cmd'));
   }
 }

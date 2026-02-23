@@ -81,20 +81,17 @@ class DataDrivenSpec extends Specification {
         0 | 0 | 0
     }
 
-    // 7. Test with complex placeholders
-    // not supported by the plugin due to issues running gradle tests with . in the name
-    /*def "test #person is #person years old"() {
+    // 7. Test with complex placeholders (simplified version using columns)
+    def "#person.name is #person.age years old"(String personName, int personAge) {
         expect:
-        person.age > 0
-        person.name.length() > 0
+        personName.length() > 0
 
         where:
-        person << [
-            new Person(name: "Alice", age: 25),
-            new Person(name: "Bob", age: 30),
-            new Person(name: "Charlie", age: 35)
-        ]
-    }*/
+        personName  | personAge
+        "Alice"     | 25
+        "Bob"       | 30
+        "Charlie"   | 35
+    }
 
     // 8. Data pipe with list
     def "should validate email format"(String email, boolean isValid) {

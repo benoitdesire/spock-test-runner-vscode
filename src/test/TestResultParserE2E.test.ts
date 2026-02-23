@@ -3,8 +3,20 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
 import { TestResultParser } from '../services/TestResultParser';
+import { describeGradle, gradleProjectPath, gradleWrapper } from './gradleTestUtils';
 
 const execAsync = promisify(exec);
+
+const runGradle = async (args: string): Promise<{ stdout: string; stderr: string }> => {
+  try {
+    return await execAsync(`${gradleWrapper} ${args}`, { cwd: gradleProjectPath });
+  } catch (error: any) {
+    return {
+      stdout: error?.stdout ?? '',
+      stderr: error?.stderr ?? String(error)
+    };
+  }
+};
 
 // Mock vscode module
 jest.mock('vscode', () => ({
@@ -15,14 +27,14 @@ jest.mock('vscode', () => ({
   }
 }));
 
-describe('TestResultParser E2E Tests', () => {
+describeGradle('TestResultParser E2E Tests', () => {
   let parser: TestResultParser;
   let mockLogger: any;
   let testProjectPath: string;
 
   beforeAll(() => {
     // Set up the test project path
-    testProjectPath = path.join(__dirname, '../../sample-project');
+    testProjectPath = path.join(__dirname, '../../sample-projects/gradle-project');
     
     // Verify the test project exists
     if (!fs.existsSync(testProjectPath)) {
@@ -40,7 +52,7 @@ describe('TestResultParser E2E Tests', () => {
   describe('Real Gradle Test Execution', () => {
     it('should parse results from actual BowlingGameSpec execution', async () => {
       // Execute the actual Gradle test - allow failures for now
-      const { stdout, stderr } = await execAsync('cd sample-project && ./gradlew test --tests "com.example.BowlingGameSpec" --console=plain');
+      const { stdout, stderr } = await runGradle('test --tests "com.example.BowlingGameSpec" --console=plain');
       
       // Log the output for debugging
       console.log('Gradle stdout:', stdout);
@@ -77,7 +89,7 @@ describe('TestResultParser E2E Tests', () => {
 
     it('should parse results from DataDrivenSpec execution', async () => {
       // Execute the actual Gradle test - allow failures for now
-      const { stdout, stderr } = await execAsync('cd sample-project && ./gradlew test --tests "com.example.DataDrivenSpec" --console=plain');
+      const { stdout, stderr } = await runGradle('test --tests "com.example.DataDrivenSpec" --console=plain');
       
       // Log the output for debugging
       console.log('DataDrivenSpec stdout:', stdout);
@@ -112,7 +124,7 @@ describe('TestResultParser E2E Tests', () => {
 
     it('should handle test failures gracefully', async () => {
       // Execute the test as-is (it's already failing)
-      const { stdout, stderr } = await execAsync('cd sample-project && ./gradlew test --tests "com.example.BowlingGameSpec" --console=plain');
+      const { stdout, stderr } = await runGradle('test --tests "com.example.BowlingGameSpec" --console=plain');
       
       // Log the output for debugging
       console.log('Failure test stdout:', stdout);
@@ -139,7 +151,7 @@ describe('TestResultParser E2E Tests', () => {
 
     it('should parse XML reports when available', async () => {
       // Execute the test to generate XML reports
-      await execAsync('cd sample-project && ./gradlew test --tests "com.example.BowlingGameSpec" --console=plain');
+      await runGradle('test --tests "com.example.BowlingGameSpec" --console=plain');
       
       // Check if XML report exists
       const xmlReportPath = path.join(testProjectPath, 'build/test-results/test/TEST-com.example.BowlingGameSpec.xml');
@@ -169,7 +181,7 @@ describe('TestResultParser E2E Tests', () => {
   describe('Console Output Parsing', () => {
     it('should parse actual Gradle console output format', async () => {
       // Execute a simple test to get real console output
-      const { stdout, stderr } = await execAsync('cd sample-project && ./gradlew test --tests "com.example.CalculatorSpec" --console=plain');
+      const { stdout, stderr } = await runGradle('test --tests "com.example.CalculatorSpec" --console=plain');
       
       // Log the output for debugging
       console.log('CalculatorSpec stdout:', stdout);
@@ -191,7 +203,7 @@ describe('TestResultParser E2E Tests', () => {
       const startTime = Date.now();
       
       // Execute all tests
-      const { stdout, stderr } = await execAsync('cd sample-project && ./gradlew test --console=plain');
+      const { stdout, stderr } = await runGradle('test --console=plain');
       
       const endTime = Date.now();
       const executionTime = endTime - startTime;

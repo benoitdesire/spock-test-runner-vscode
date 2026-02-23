@@ -131,10 +131,7 @@ describe('TestResultParser', () => {
   });
 
   describe('parseXmlReport', () => {
-    beforeEach(() => {
-      // Mock fs module
-      (fs.existsSync as jest.Mock).mockReturnValue(true);
-      (fs.readFileSync as jest.Mock).mockReturnValue(`
+    const sampleXmlContent = `
         <?xml version="1.0" encoding="UTF-8"?>
         <testsuite name="com.example.DataDrivenSpec" tests="3" skipped="0" failures="1" errors="0">
           <testcase name="should calculate score [roll1: 3, roll2: 4, expectedScore: 4, #0]" classname="com.example.DataDrivenSpec" time="0.009"/>
@@ -143,15 +140,10 @@ describe('TestResultParser', () => {
             <failure message="Expected 0 but was 1">Assertion failed</failure>
           </testcase>
         </testsuite>
-      `);
-    });
-
-    afterEach(() => {
-      jest.clearAllMocks();
-    });
+      `;
 
     it('should parse XML report with iteration results', async () => {
-      const results = await parser.parseXmlReport('/test/workspace', 'com.example.DataDrivenSpec');
+      const results = await parser.parseXmlReport(sampleXmlContent, 'com.example.DataDrivenSpec');
 
       expect(results).toHaveLength(3);
       expect(results[0]).toEqual({
@@ -173,20 +165,14 @@ describe('TestResultParser', () => {
       });
     });
 
-    it('should return empty array when XML file does not exist', async () => {
-      (fs.existsSync as jest.Mock).mockReturnValue(false);
-
-      const results = await parser.parseXmlReport('/test/workspace', 'com.example.DataDrivenSpec');
+    it('should return empty array when XML content is empty', async () => {
+      const results = await parser.parseXmlReport('', 'com.example.DataDrivenSpec');
 
       expect(results).toHaveLength(0);
     });
 
-    it('should handle XML parsing errors gracefully', async () => {
-      (fs.readFileSync as jest.Mock).mockImplementation(() => {
-        throw new Error('Invalid XML');
-      });
-
-      const results = await parser.parseXmlReport('/test/workspace', 'com.example.DataDrivenSpec');
+    it('should handle XML with no matching iterations gracefully', async () => {
+      const results = await parser.parseXmlReport('malformed xml content', 'com.example.DataDrivenSpec');
 
       expect(results).toHaveLength(0);
     });

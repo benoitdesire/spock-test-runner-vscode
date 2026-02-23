@@ -49,6 +49,7 @@ export class TestExecutionService {
       const childProcess = spawn(commandArgs[0], commandArgs.slice(1), {
         cwd: options.workspacePath,
         stdio: 'pipe',
+        shell: process.platform === 'win32',
         env: { ...process.env }
       });
 

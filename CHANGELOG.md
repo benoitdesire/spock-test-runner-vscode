@@ -4,6 +4,14 @@ All notable changes to the "spock-test-runner-vscode" extension will be document
 
 **Author**: Lukas Zaruba
 
+## [Unreleased]
+
+### Fixed
+- **Windows Compatibility**: Use `gradlew.bat` and `mvnw.cmd` on Windows instead of Unix-only `./gradlew` and `./mvnw`
+- **Windows Wrapper Detection**: Detect both Unix and Windows wrapper scripts (`gradlew`/`gradlew.bat`, `mvnw`/`mvnw.cmd`)
+- **Windows Test Name Quoting**: Quote test names containing spaces to prevent shell argument splitting
+- **Windows Process Spawning**: Enable shell mode when spawning `.bat`/`.cmd` files on Windows
+
 ## [0.0.4] - 2025-10-01
 
 ### Added

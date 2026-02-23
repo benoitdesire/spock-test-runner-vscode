@@ -3,7 +3,7 @@ import * as path from 'path';
 import { TestDiscoveryService } from '../services/TestDiscoveryService';
 
 describe('TestDiscoveryService', () => {
-  const sampleProjectPath = path.join(__dirname, '../../sample-project/src/test/groovy/com/example');
+  const sampleProjectPath = path.join(__dirname, '../../sample-projects/gradle-project/src/test/groovy/com/example');
   
   describe('parseTestsInFile', () => {
     it('should parse regular test methods from CalculatorSpec', () => {
@@ -109,15 +109,15 @@ describe('TestDiscoveryService', () => {
       expect(complexPlaceholderTest!.isDataDriven).toBeTruthy();
       expect(complexPlaceholderTest!.dataIterations).toHaveLength(3);
       
-      // For data pipes, we create iterations with the parsed data
+      // Method uses personName / personAge columns (simplified version)
       expect(complexPlaceholderTest!.dataIterations![0].dataValues).toEqual({ 
-        person: { name: "Alice", age: 25 }
+        personName: 'Alice', personAge: 25
       });
       expect(complexPlaceholderTest!.dataIterations![1].dataValues).toEqual({ 
-        person: { name: "Bob", age: 30 }
+        personName: 'Bob', personAge: 30
       });
       expect(complexPlaceholderTest!.dataIterations![2].dataValues).toEqual({ 
-        person: { name: "Charlie", age: 35 }
+        personName: 'Charlie', personAge: 35
       });
     });
 

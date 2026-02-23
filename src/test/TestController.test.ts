@@ -215,7 +215,7 @@ describe('SpockTestController', () => {
     });
 
     it('should create test items with correct tags for CalculatorSpec', async () => {
-      const sampleProjectPath = path.join(__dirname, '../../sample-project/src/test/groovy/com/example');
+      const sampleProjectPath = path.join(__dirname, '../../sample-projects/gradle-project/src/test/groovy/com/example');
       const filePath = path.join(sampleProjectPath, 'CalculatorSpec.groovy');
       const fileUri = vscode.Uri.file(filePath);
       
@@ -288,7 +288,7 @@ describe('SpockTestController', () => {
     });
 
     it('should create test items with correct tags for DataDrivenSpec', async () => {
-      const sampleProjectPath = path.join(__dirname, '../../sample-project/src/test/groovy/com/example');
+      const sampleProjectPath = path.join(__dirname, '../../sample-projects/gradle-project/src/test/groovy/com/example');
       const filePath = path.join(sampleProjectPath, 'DataDrivenSpec.groovy');
       const fileUri = vscode.Uri.file(filePath);
       
@@ -383,7 +383,7 @@ describe('SpockTestController', () => {
 
   describe('Comprehensive Test Execution Levels', () => {
     it('should handle empty spec files correctly', async () => {
-      const sampleProjectPath = path.join(__dirname, '../../sample-project/src/test/groovy/com/example');
+      const sampleProjectPath = path.join(__dirname, '../../sample-projects/gradle-project/src/test/groovy/com/example');
       const filePath = path.join(sampleProjectPath, 'EmptySpec.groovy');
       const fileUri = vscode.Uri.file(filePath);
       
@@ -451,7 +451,7 @@ describe('SpockTestController', () => {
     });
 
     it('should handle abstract spec files correctly', async () => {
-      const sampleProjectPath = path.join(__dirname, '../../sample-project/src/test/groovy/com/example');
+      const sampleProjectPath = path.join(__dirname, '../../sample-projects/gradle-project/src/test/groovy/com/example');
       const filePath = path.join(sampleProjectPath, 'AbstractSpec.groovy');
       const fileUri = vscode.Uri.file(filePath);
       
@@ -525,7 +525,7 @@ describe('SpockTestController', () => {
     });
 
     it('should handle nested class spec files correctly', async () => {
-      const sampleProjectPath = path.join(__dirname, '../../sample-project/src/test/groovy/com/example');
+      const sampleProjectPath = path.join(__dirname, '../../sample-projects/gradle-project/src/test/groovy/com/example');
       const filePath = path.join(sampleProjectPath, 'NestedClassSpec.groovy');
       const fileUri = vscode.Uri.file(filePath);
       
@@ -601,7 +601,7 @@ describe('SpockTestController', () => {
     });
 
     it('should handle complex data spec files correctly', async () => {
-      const sampleProjectPath = path.join(__dirname, '../../sample-project/src/test/groovy/com/example');
+      const sampleProjectPath = path.join(__dirname, '../../sample-projects/gradle-project/src/test/groovy/com/example');
       const filePath = path.join(sampleProjectPath, 'ComplexDataSpec.groovy');
       const fileUri = vscode.Uri.file(filePath);
       
@@ -677,7 +677,7 @@ describe('SpockTestController', () => {
     });
 
     it('should handle malformed spec files gracefully', async () => {
-      const sampleProjectPath = path.join(__dirname, '../../sample-project/src/test/groovy/com/example');
+      const sampleProjectPath = path.join(__dirname, '../../sample-projects/gradle-project/src/test/groovy/com/example');
       const filePath = path.join(sampleProjectPath, 'MalformedSpec.groovy');
       const fileUri = vscode.Uri.file(filePath);
       
