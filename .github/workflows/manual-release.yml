@@ -1,0 +1,68 @@
+name: Manual VS Code Extension Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Git tag to create/use (e.g. v0.0.5)"
+        required: true
+      prerelease:
+        description: "Mark as prerelease? (true/false)"
+        required: false
+        default: "false"
+
+permissions:
+  contents: write
+
+jobs:
+  build-package-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Uses your scripts exactly:
+      - name: Compile
+        run: npm run compile
+
+      - name: Lint
+        run: npm run lint
+
+      # Your repo has many test flavors; this runs the default "jest"
+      - name: Test
+        run: npm test
+
+      # vsce package will run vscode:prepublish by default
+      # (which in your scripts calls compile). We already compiled, but that's OK.
+      - name: Package VSIX
+        run: npx vsce package
+
+      - name: Resolve VSIX filename
+        id: vsix
+        shell: bash
+        run: |
+          set -euo pipefail
+          VSIX="$(ls -1 *.vsix | head -n 1)"
+          echo "vsix=$VSIX" >> "$GITHUB_OUTPUT"
+
+      # Create release (also creates the tag if it doesn't exist)
+      - name: Create GitHub Release + upload VSIX
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag }}
+          name: ${{ inputs.tag }}
+          prerelease: ${{ inputs.prerelease == 'true' }}
+          files: ${{ steps.vsix.outputs.vsix }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
